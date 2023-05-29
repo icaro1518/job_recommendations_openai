@@ -1,16 +1,17 @@
 import logging
-
+import openai
 from typing import Optional
-from settings import (PATH_FILE_VACANTES,
+from conf.settings import (PATH_FILE_VACANTES,
                       PATH_FILE_USERS,
                       SHEET_NAME_VACANTES,
                       SHEET_NAME_RECO,
-                      SHEET_NAME_USERS)
+                      SHEET_NAME_USERS,
+                      PATH_API_KEY)
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from db import Database
-from generate_recomendations import GenerateRecomendations
+from utils.db import Database
+from utils.generate_recomendations import GenerateRecomendations
 
 logging.basicConfig(filename='example.log', 
                     level=logging.INFO, 
@@ -20,6 +21,7 @@ logging.basicConfig(filename='example.log',
 
 log = logging.getLogger()
 
+openai.api_key_path = PATH_API_KEY
 app = FastAPI()
 
 vacantes_df = Database.read_data(PATH_FILE_VACANTES)
@@ -75,7 +77,9 @@ async def create_user(user: User):
 
 @app.get("/recommendations/")
 async def generate_recommendations():
-    gen = GenerateRecomendations(vacantes, users)
+    gen = GenerateRecomendations(users, vacantes)
     recs = gen.generate_recommendations()
+    log.info(recs.shape)
+    log.info(recs.id_user.unique())
     Database.write_recommendations(PATH_FILE_USERS, SHEET_NAME_RECO, recs)
     return  {"Success": "The recommendations were written in database users file"}

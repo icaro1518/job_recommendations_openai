@@ -26,14 +26,12 @@ class Database():
         workbook.save(filename = filename)
     
     @staticmethod
-    def write_recommendations(filename: str, sheetname: str, data: pd.DataFrame):
+    def write_recommendations(filename: str, sheetname: str, data_raw: pd.DataFrame):
+        data = data_raw.copy().reset_index(drop=True)
         # Start by opening the spreadsheet and selecting the main sheet
-        log.info(filename)
         workbook = load_workbook(filename)
-        log.info(sheetname)
         sheet2 = workbook.create_sheet(title=sheetname)
         for i, name in enumerate(data.columns):
-            log.info(name)
             sheet2.cell(row=1, column=i+1).value = name
         
         for i, row in data.iterrows():
@@ -43,3 +41,4 @@ class Database():
             
         # Save the spreadsheet
         workbook.save(filename=filename)
+        workbook.close()
